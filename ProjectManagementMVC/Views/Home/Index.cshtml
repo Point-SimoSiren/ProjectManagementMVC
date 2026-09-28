@@ -1,0 +1,25 @@
+﻿@{
+    ViewData["Title"] = "Home Page";
+}
+@{
+    int x = 100;
+}
+
+
+<div class="text-center">
+   <h1>Project Management Pro</h1>
+
+    
+    @if (x > 99)
+    {
+        <h2>X on vähintään 100</h2>
+    }
+    else
+    {
+        <h2>X on max. 99</h2>
+    }
+
+</div>
+<script>
+    alert("Tämä on javascriptiä.");
+</script>

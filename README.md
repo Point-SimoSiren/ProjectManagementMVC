@@ -139,8 +139,11 @@ tietokannassa. `AsNoTracking()` sopii luettaville listoille, joita ei tallenneta
 
 Poistosivu kertoo liittyvistä tiedoista ja tarjoaa linkit suodatettuihin listoihin.
 `DeleteBehavior.Restrict` ja tietokannan vierasavaimet estävät orpojen viittausten syntymisen.
-Puuttuva tietue palauttaa 404-vastauksen. `CrudController.TrySave()` käsittelee
-tallennuksen tietokantavirheet lomakeviestinä ja kirjaa teknisen syyn lokiin.
+Puuttuva tietue palauttaa 404-vastauksen. Jokainen controller perii suoraan
+ASP.NET Coren `Controller`-luokan ja sisältää tarvitsemansa yksityiset apumetodit.
+Näin toimintojen kulkua voi seurata yhdestä controller-tiedostosta. Controllerin
+`TrySave()` käsittelee tallennuksen tietokantavirheet lomakeviestinä ja kirjaa
+teknisen syyn lokiin.
 
 ## Testit
 

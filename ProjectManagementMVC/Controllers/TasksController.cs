@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using ProjectManagementMVC.Models;
 using ProjectManagementMVC.ViewModels;
@@ -6,8 +7,11 @@ using ProjectTask = ProjectManagementMVC.Models.Task;
 
 namespace ProjectManagementMVC.Controllers;
 
-public class TasksController(TaskDbContext context, ILogger<TasksController> logger) : CrudController(context, logger)
+public class TasksController(TaskDbContext context, ILogger<TasksController> logger) : Controller
 {
+    // DI antaa tietokantayhteyden tälle controllerille yhden HTTP-pyynnön ajaksi.
+    private readonly TaskDbContext Db = context;
+
     public async Task<IActionResult> Index(string? search, int? userId, int? projectId, WorkStatus? status)
     {
         var query = Db.Tasks.AsNoTracking().Include(t => t.User).Include(t => t.Project).AsQueryable();
@@ -115,5 +119,43 @@ public class TasksController(TaskDbContext context, ILogger<TasksController> log
     {
         form.Users = await UserOptions();
         form.Projects = await ProjectOptions();
+    }
+
+    // Yksityiset apumetodit kuuluvat vain tähän controlleriin, eivätkä ole HTTP-toimintoja.
+    private Task<List<SelectListItem>> UserOptions() => Db.Users.AsNoTracking()
+        .OrderBy(u => u.LastName).ThenBy(u => u.FirstName)
+        .Select(u => new SelectListItem(u.FirstName + " " + u.LastName + " (" + u.Email + ")", u.UserId.ToString()))
+        .ToListAsync();
+
+    private Task<List<SelectListItem>> ProjectOptions() => Db.Projects.AsNoTracking()
+        .OrderBy(p => p.Name)
+        .Select(p => new SelectListItem(p.Name, p.ProjectId.ToString())).ToListAsync();
+
+    private async System.Threading.Tasks.Task ValidateUser(int? userId)
+    {
+        // Valikko ei yksin takaa kelvollisuutta: myös käsin lähetetty tunniste tarkistetaan.
+        if (userId.HasValue && !await Db.Users.AnyAsync(u => u.UserId == userId))
+            ModelState.AddModelError("UserId", "Valittua käyttäjää ei enää ole. Valitse toinen käyttäjä.");
+    }
+
+    private async Task<bool> TrySave()
+    {
+        try
+        {
+            await Db.SaveChangesAsync();
+            return true;
+        }
+        catch (DbUpdateConcurrencyException ex)
+        {
+            logger.LogWarning(ex, "Tietue muuttui tallennuksen aikana.");
+            ModelState.AddModelError("", "Tietue on poistettu tai muuttunut. Päivitä sivu ja yritä uudelleen.");
+        }
+        catch (DbUpdateException ex)
+        {
+            // Tietokannan rajoitteet ovat viimeinen suoja myös samanaikaisissa pyynnöissä.
+            logger.LogWarning(ex, "Tietokanta hylkäsi muutoksen.");
+            ModelState.AddModelError("", "Tallennus epäonnistui. Sähköposti voi olla jo käytössä tai liittyvä tietue on muuttunut. Poisto edellyttää, ettei tietueeseen ole viittauksia.");
+        }
+        return false;
     }
 }

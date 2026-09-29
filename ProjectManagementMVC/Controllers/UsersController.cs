@@ -5,8 +5,11 @@ using ProjectManagementMVC.ViewModels;
 
 namespace ProjectManagementMVC.Controllers;
 
-public class UsersController(TaskDbContext context, ILogger<UsersController> logger) : CrudController(context, logger)
+public class UsersController(TaskDbContext context, ILogger<UsersController> logger) : Controller
 {
+    // DI antaa tietokantayhteyden tälle controllerille yhden HTTP-pyynnön ajaksi.
+    private readonly TaskDbContext Db = context;
+
     public async Task<IActionResult> Index(string? search)
     {
         // IQueryable rakentaa SQL-kyselyn. Suodatus suoritetaan tietokannassa ennen ToListAsync-kutsua.
@@ -95,5 +98,27 @@ public class UsersController(TaskDbContext context, ILogger<UsersController> log
         if (!string.IsNullOrWhiteSpace(form.Email) &&
             await Db.Users.AnyAsync(u => u.Email == form.Email.Trim() && u.UserId != id))
             ModelState.AddModelError(nameof(form.Email), "Sähköpostiosoite on jo käytössä.");
+    }
+
+    // Yksityiset apumetodit kuuluvat vain tähän controlleriin, eivätkä ole HTTP-toimintoja.
+    private async Task<bool> TrySave()
+    {
+        try
+        {
+            await Db.SaveChangesAsync();
+            return true;
+        }
+        catch (DbUpdateConcurrencyException ex)
+        {
+            logger.LogWarning(ex, "Tietue muuttui tallennuksen aikana.");
+            ModelState.AddModelError("", "Tietue on poistettu tai muuttunut. Päivitä sivu ja yritä uudelleen.");
+        }
+        catch (DbUpdateException ex)
+        {
+            // Tietokannan rajoitteet ovat viimeinen suoja myös samanaikaisissa pyynnöissä.
+            logger.LogWarning(ex, "Tietokanta hylkäsi muutoksen.");
+            ModelState.AddModelError("", "Tallennus epäonnistui. Sähköposti voi olla jo käytössä tai liittyvä tietue on muuttunut. Poisto edellyttää, ettei tietueeseen ole viittauksia.");
+        }
+        return false;
     }
 }

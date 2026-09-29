@@ -1,25 +1,8 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
-}
-@{
-    int x = 100;
-}
-
-
-<div class="text-center">
-   <h1>Project Management Pro</h1>
-
-    
-    @if (x > 99)
-    {
-        <h2>X on vähintään 100</h2>
-    }
-    else
-    {
-        <h2>X on max. 99</h2>
-    }
-
+@{ ViewData["Title"] = "Projektien hallinta"; }
+<h1>Projektien hallinta</h1>
+<p>Lisää ensin käyttäjät, sitten projektit ja tehtävät. Voit luoda tehtävän myös ilman projektia.</p>
+<div class="row g-3">
+    <div class="col-md-4"><h2>Käyttäjät</h2><p>Yhteystiedot sekä käyttäjään liittyvät projektit ja tehtävät.</p><a asp-controller="Users" asp-action="Index" class="btn btn-primary">Käyttäjät</a></div>
+    <div class="col-md-4"><h2>Projektit</h2><p>Nimi, kuvaus ja valittava omistaja.</p><a asp-controller="Projects" asp-action="Index" class="btn btn-primary">Projektit</a></div>
+    <div class="col-md-4"><h2>Tehtävät</h2><p>Vastuuhenkilö, valinnainen projekti, tila ja prioriteetti.</p><a asp-controller="Tasks" asp-action="Index" class="btn btn-primary">Tehtävät</a></div>
 </div>
-<script>
-    alert("Tämä on javascriptiä.");
-</script>

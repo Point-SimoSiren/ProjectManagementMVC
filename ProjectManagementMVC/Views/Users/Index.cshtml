@@ -1,65 +1,38 @@
-@model IEnumerable<ProjectManagementMVC.Models.User>
-
-@{
-    ViewData["Title"] = "Index";
+@model ListViewModel<User>
+@{ ViewData["Title"] = "Käyttäjät"; }
+<h1>Käyttäjät</h1>
+<p><a asp-action="Create" class="btn btn-primary">Lisää käyttäjä</a></p>
+@* GET-haku ei muuta tietoja. Hakutuloksen osoitteen voi tallentaa kirjanmerkiksi. *@
+<form asp-action="Index" method="get" class="row g-3 mb-4 align-items-end">
+    <div class="col-md-5"><label asp-for="Search" class="form-label">Hae nimellä tai sähköpostilla</label>
+        <input asp-for="Search" class="form-control search-input" type="search" /></div>
+    <div class="col-auto"><button type="submit" class="btn btn-secondary">Hae</button>
+        <a asp-action="Index" class="btn btn-outline-secondary">Tyhjennä haku</a></div>
+</form>
+<p aria-live="polite">Tuloksia: @Model.Items.Count</p>
+@if (Model.Items.Count == 0)
+{
+    <p>Ei hakuehtoja vastaavia tietoja. Muuta hakua tai lisää uusi tietue.</p>
 }
-
-<h1>Index</h1>
-
-<p>
-    <a asp-action="Create">Create New</a>
-</p>
-<table class="table">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.FirstName)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.LastName)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Email)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.CreatedAt)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Projects)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Tasks)
-            </th>
-            <th></th>
-        </tr>
-    </thead>
+else
+{
+<div class="table-responsive">
+<table class="table table-striped align-middle">
+    <thead><tr><th scope="col">Nimi</th><th scope="col">Sähköposti</th><th scope="col">Toiminnot</th></tr></thead>
     <tbody>
-@foreach (var item in Model) {
+    @foreach (var item in Model.Items)
+    {
         <tr>
-            <td>
-                @Html.DisplayFor(model => item.FirstName)
-            </td>
-            <td>
-                @Html.DisplayFor(model => item.LastName)
-            </td>
-            <td>
-                @Html.DisplayFor(model => item.Email)
-            </td>
-            <td>
-                @Html.DisplayFor(model => item.CreatedAt)
-            </td>
-            <td>
-                @Html.DisplayFor(model => item.Projects)
-            </td>
-            <td>
-                @Html.DisplayFor(model => item.Tasks)
-            </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.UserId">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.UserId">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.UserId">Delete</a>
+            <td>@(item.FirstName + " " + item.LastName)</td>
+            <td>@item.Email</td>
+            <td class="text-nowrap">
+                <a asp-action="Details" asp-route-id="@item.UserId">Tiedot</a> |
+                <a asp-action="Edit" asp-route-id="@item.UserId">Muokkaa</a> |
+                <a asp-action="Delete" asp-route-id="@item.UserId">Poista</a>
             </td>
         </tr>
-}
+    }
     </tbody>
 </table>
+</div>
+}

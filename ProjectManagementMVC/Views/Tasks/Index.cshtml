@@ -1,89 +1,45 @@
-@model IEnumerable<ProjectManagementMVC.Models.Task>
-
-@{
-    ViewData["Title"] = "Index";
+@model ListViewModel<ProjectManagementMVC.Models.Task>
+@{ ViewData["Title"] = "Tehtävät"; }
+<h1>Tehtävät</h1>
+<p><a asp-action="Create" class="btn btn-primary">Lisää tehtävä</a></p>
+@* GET-haku ei muuta tietoja. Hakutuloksen osoitteen voi tallentaa kirjanmerkiksi. *@
+<form asp-action="Index" method="get" class="row g-3 mb-4 align-items-end">
+    <div class="col-md-5"><label asp-for="Search" class="form-label">Hae otsikosta, kuvauksesta, henkilöstä tai projektista</label>
+        <input asp-for="Search" class="form-control search-input" type="search" />
+    </div>
+    <div class="col-md-3"><label asp-for="UserId" class="form-label">Vastuuhenkilö</label><select asp-for="UserId" asp-items="Model.Users" class="form-select"><option value="">Kaikki käyttäjät</option></select></div>
+<div class="col-md-3"><label asp-for="ProjectId" class="form-label">Projekti</label><select asp-for="ProjectId" asp-items="Model.Projects" class="form-select"><option value="">Kaikki projektit</option></select></div>
+<div class="col-md-2"><label asp-for="Status" class="form-label">Tila</label><select asp-for="Status" asp-items="Html.GetEnumSelectList<WorkStatus>()" class="form-select"><option value="">Kaikki tilat</option></select></div>
+<div class="col-auto"><button type="submit" class="btn btn-secondary">Hae</button>
+        <a asp-action="Index" class="btn btn-outline-secondary">Tyhjennä haku</a></div>
+</form>
+<p aria-live="polite">Tuloksia: @Model.Items.Count</p>
+@if (Model.Items.Count == 0)
+{
+    <p>Ei hakuehtoja vastaavia tietoja. Muuta hakua tai lisää uusi tietue.</p>
 }
-
-<h1>Index</h1>
-
-<p>
-    <a asp-action="Create">Create New</a>
-</p>
-<table class="table">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.Title)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Description)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Status)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.StatusChanged)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Priority)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.UserId)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.ProjectId)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.CreatedAt)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Project)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.User)
-            </th>
-            <th></th>
-        </tr>
-    </thead>
+else
+{
+<div class="table-responsive">
+<table class="table table-striped align-middle">
+    <thead><tr><th scope="col">Otsikko</th><th scope="col">Tila</th><th scope="col">Prioriteetti</th><th scope="col">Vastuuhenkilö</th><th scope="col">Projekti</th><th scope="col">Toiminnot</th></tr></thead>
     <tbody>
-@foreach (var item in Model) {
+    @foreach (var item in Model.Items)
+    {
         <tr>
-            <td>
-                @Html.DisplayFor(model => item.Title)
-            </td>
-            <td>
-                @Html.DisplayFor(model => item.Description)
-            </td>
-            <td>
-                @Html.DisplayFor(model => item.Status)
-            </td>
-            <td>
-                @Html.DisplayFor(model => item.StatusChanged)
-            </td>
-            <td>
-                @Html.DisplayFor(model => item.Priority)
-            </td>
-            <td>
-                @Html.DisplayFor(model => item.UserId)
-            </td>
-            <td>
-                @Html.DisplayFor(model => item.ProjectId)
-            </td>
-            <td>
-                @Html.DisplayFor(model => item.CreatedAt)
-            </td>
-            <td>
-                @Html.DisplayFor(model => item.Project!.Name)
-            </td>
-            <td>
-                @Html.DisplayFor(model => item.User.Email)
-            </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.TaskId">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.TaskId">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.TaskId">Delete</a>
+            <td>@item.Title</td>
+            <td>@Html.DisplayFor(_ => item.Status)</td>
+            <td>@Html.DisplayFor(_ => item.Priority)</td>
+            <td>@(item.User.FirstName + " " + item.User.LastName)</td>
+            <td>@(item.Project?.Name ?? "Ei projektia")</td>
+            <td class="text-nowrap">
+                <a asp-action="Details" asp-route-id="@item.TaskId">Tiedot</a> |
+                <a asp-action="Edit" asp-route-id="@item.TaskId">Muokkaa</a> |
+                <a asp-action="Delete" asp-route-id="@item.TaskId">Poista</a>
             </td>
         </tr>
-}
+    }
     </tbody>
 </table>
+</div>
+}

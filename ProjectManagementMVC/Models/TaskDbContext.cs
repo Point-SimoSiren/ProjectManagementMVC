@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 
@@ -6,10 +6,6 @@ namespace ProjectManagementMVC.Models;
 
 public partial class TaskDbContext : DbContext
 {
-    public TaskDbContext()
-    {
-    }
-
     public TaskDbContext(DbContextOptions<TaskDbContext> options)
         : base(options)
     {
@@ -21,10 +17,9 @@ public partial class TaskDbContext : DbContext
 
     public virtual DbSet<User> Users { get; set; }
 
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseSqlServer("Data Source=DUUNIKONE\\SQLEXPRESS; Database=TaskDB;Integrated Security=True;Encrypt=True;Trust Server Certificate=True");
-
+    // Fluent API määrittelee taulujen pituudet, oletusarvot ja vierasavaimet.
+    // Restrict vastaa nykyisen SQL Server -kannan NO ACTION -rajoitteita:
+    // viitattua tietuetta ei poisteta automaattisesti siihen liittyvien tietojen kanssa.
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Project>(entity =>
@@ -35,7 +30,7 @@ public partial class TaskDbContext : DbContext
 
             entity.HasOne(d => d.User).WithMany(p => p.Projects)
                 .HasForeignKey(d => d.UserId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
+                .OnDelete(DeleteBehavior.Restrict)
                 .HasConstraintName("FK_Projects_Users");
         });
 
@@ -47,11 +42,12 @@ public partial class TaskDbContext : DbContext
 
             entity.HasOne(d => d.Project).WithMany(p => p.Tasks)
                 .HasForeignKey(d => d.ProjectId)
+                .OnDelete(DeleteBehavior.Restrict)
                 .HasConstraintName("FK_Tasks_Projects");
 
             entity.HasOne(d => d.User).WithMany(p => p.Tasks)
                 .HasForeignKey(d => d.UserId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
+                .OnDelete(DeleteBehavior.Restrict)
                 .HasConstraintName("FK_Tasks_Users");
         });
 

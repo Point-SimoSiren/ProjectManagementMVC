@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace ProjectManagementMVC.Models;
@@ -11,11 +11,11 @@ public partial class Task
 
     public string? Description { get; set; }
 
-    public int Status { get; set; }
+    public WorkStatus Status { get; set; }
 
     public DateTime? StatusChanged { get; set; }
 
-    public int Priority { get; set; }
+    public TaskPriority Priority { get; set; }
 
     public int UserId { get; set; }
 
@@ -23,6 +23,7 @@ public partial class Task
 
     public DateTime CreatedAt { get; set; }
 
+    // Navigaatio on EF:n lataama liittyvä olio, ei lomakkeessa täytettävä kenttä.
     public virtual Project? Project { get; set; }
 
     public virtual User User { get; set; } = null!;

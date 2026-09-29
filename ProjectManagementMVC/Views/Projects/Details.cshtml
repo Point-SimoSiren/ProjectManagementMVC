@@ -1,0 +1,6 @@
+@model Project
+@{ ViewData["Title"] = "Tiedot: projekti"; }
+<h1>@ViewData["Title"]</h1>
+<partial name="_Details" model="Model" />
+<a asp-action="Edit" asp-route-id="@Model.ProjectId" class="btn btn-primary">Muokkaa</a>
+<a asp-action="Index" class="btn btn-outline-secondary">Takaisin listaan</a>

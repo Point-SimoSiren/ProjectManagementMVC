@@ -21,6 +21,21 @@ body {
   margin-bottom: 60px;
 }
 
+/* Tumma reunus erottaa hakukentän myös silloin, kun kenttä on tyhjä. */
+.search-input {
+  border: 2px solid #64748b;
+  background-color: #f1f5f9;
+  color: #172033;
+}
+
+.search-input:focus {
+  border-color: #005fcc;
+  background-color: #fff;
+  outline: 2px solid #005fcc;
+  outline-offset: 2px;
+  box-shadow: none;
+}
+
 .form-floating > .form-control-plaintext::placeholder, .form-floating > .form-control::placeholder {
   color: var(--bs-secondary-color);
   text-align: end;

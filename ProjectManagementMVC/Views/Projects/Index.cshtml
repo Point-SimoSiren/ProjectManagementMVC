@@ -1,0 +1,41 @@
+@model ListViewModel<Project>
+@{ ViewData["Title"] = "Projektit"; }
+<h1>Projektit</h1>
+<p><a asp-action="Create" class="btn btn-primary">Lisää projekti</a></p>
+@* GET-haku ei muuta tietoja. Hakutuloksen osoitteen voi tallentaa kirjanmerkiksi. *@
+<form asp-action="Index" method="get" class="row g-3 mb-4 align-items-end">
+    <div class="col-md-5"><label asp-for="Search" class="form-label">Hae nimestä, kuvauksesta tai omistajasta</label>
+        <input asp-for="Search" class="form-control search-input" type="search" />
+    </div>
+    <div class="col-md-3"><label asp-for="UserId" class="form-label">Omistaja</label><select asp-for="UserId" asp-items="Model.Users" class="form-select"><option value="">Kaikki käyttäjät</option></select></div>
+<div class="col-auto"><button type="submit" class="btn btn-secondary">Hae</button>
+        <a asp-action="Index" class="btn btn-outline-secondary">Tyhjennä haku</a></div>
+</form>
+<p aria-live="polite">Tuloksia: @Model.Items.Count</p>
+@if (Model.Items.Count == 0)
+{
+    <p>Ei hakuehtoja vastaavia tietoja. Muuta hakua tai lisää uusi tietue.</p>
+}
+else
+{
+<div class="table-responsive">
+<table class="table table-striped align-middle">
+    <thead><tr><th scope="col">Nimi</th><th scope="col">Kuvaus</th><th scope="col">Omistaja</th><th scope="col">Toiminnot</th></tr></thead>
+    <tbody>
+    @foreach (var item in Model.Items)
+    {
+        <tr>
+            <td>@item.Name</td>
+            <td>@item.Description</td>
+            <td>@(item.User.FirstName + " " + item.User.LastName)</td>
+            <td class="text-nowrap">
+                <a asp-action="Details" asp-route-id="@item.ProjectId">Tiedot</a> |
+                <a asp-action="Edit" asp-route-id="@item.ProjectId">Muokkaa</a> |
+                <a asp-action="Delete" asp-route-id="@item.ProjectId">Poista</a>
+            </td>
+        </tr>
+    }
+    </tbody>
+</table>
+</div>
+}

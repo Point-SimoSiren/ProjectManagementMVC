@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace ProjectManagementMVC.Models;
@@ -13,8 +13,9 @@ public partial class User
 
     public string Email { get; set; } = null!;
 
-    public DateTime CreatedAt { get; set; } = DateTime.Now;
+    public DateTime CreatedAt { get; set; }
 
+    // Kokoelmat kuvaavat yksi-moneen-suhteita. Uusi käyttäjä aloittaa tyhjillä kokoelmilla.
     public virtual ICollection<Project> Projects { get; set; } = new List<Project>();
 
     public virtual ICollection<Task> Tasks { get; set; } = new List<Task>();

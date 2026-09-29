@@ -1,0 +1,8 @@
+@model Project
+<dl class="row">
+    <dt class="col-sm-3">Nimi</dt><dd class="col-sm-9">@Model.Name</dd>
+    <dt class="col-sm-3">Kuvaus</dt><dd class="col-sm-9">@Model.Description</dd>
+    <dt class="col-sm-3">Omistaja</dt><dd class="col-sm-9"><a asp-controller="Users" asp-action="Details" asp-route-id="@Model.UserId">@Model.User.FirstName @Model.User.LastName</a></dd>
+    <dt class="col-sm-3">Luotu</dt><dd class="col-sm-9">@Model.CreatedAt.ToString("dd.MM.yyyy HH:mm")</dd>
+    <dt class="col-sm-3">Tehtävät</dt><dd class="col-sm-9"><a asp-controller="Tasks" asp-action="Index" asp-route-projectId="@Model.ProjectId">Näytä tehtävät (@Model.Tasks.Count)</a></dd>
+</dl>

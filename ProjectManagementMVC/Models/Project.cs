@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace ProjectManagementMVC.Models;
@@ -11,6 +11,7 @@ public partial class Project
 
     public string? Description { get; set; }
 
+    // Vierasavain viittaa olemassa olevaan omistajaan; nimi ja sähköposti ovat Users-taulussa.
     public int UserId { get; set; }
 
     public DateTime CreatedAt { get; set; }

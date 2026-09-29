@@ -1,145 +1,99 @@
-
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ProjectManagementMVC.Models;
+using ProjectManagementMVC.ViewModels;
 
-public class UsersController : Controller
+namespace ProjectManagementMVC.Controllers;
+
+public class UsersController(TaskDbContext context, ILogger<UsersController> logger) : CrudController(context, logger)
 {
-    private readonly TaskDbContext _context = new TaskDbContext();
-
-
-    // GET: USERS
-    public async Task<IActionResult> Index()    
+    public async Task<IActionResult> Index(string? search)
     {
-        return View(await _context.Users.ToListAsync());
+        // IQueryable rakentaa SQL-kyselyn. Suodatus suoritetaan tietokannassa ennen ToListAsync-kutsua.
+        var query = Db.Users.AsNoTracking();
+        search = search?.Trim();
+        if (!string.IsNullOrEmpty(search))
+            query = query.Where(u => (u.FirstName + " " + u.LastName).Contains(search) || u.Email.Contains(search));
+        return View(new ListViewModel<User> { Search = search,
+            Items = await query.OrderBy(u => u.LastName).ThenBy(u => u.FirstName).ToListAsync() });
     }
 
-    // GET: USERS/Details/5
-    public async Task<IActionResult> Details(int? id)
+    public async Task<IActionResult> Details(int id)
     {
-        if (id == null)
-        {
-            return NotFound();
-        }
-
-        var user = await _context.Users
-            .FirstOrDefaultAsync(m => m.UserId == id);
-        if (user == null)
-        {
-            return NotFound();
-        }
-
-        return View(user);
+        var user = await ReadUser(id);
+        return user is null ? NotFound() : View(user);
     }
 
-    // GET: USERS/Create
-    public IActionResult Create()
-    {
-        return View();
-    }
+    public IActionResult Create() => View(new UserForm());
 
-    // POST: USERS/Create
-    // To protect from overposting attacks, enable the specific properties you want to bind to.
-    // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create([Bind("UserId,FirstName,LastName,Email,CreatedAt,Projects,Tasks")] User user)
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> Create(UserForm form)
     {
+        await ValidateEmail(form);
         if (ModelState.IsValid)
         {
-            _context.Add(user);
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+            // Tunnisteen tuottaa tietokanta ja aikaleiman palvelin, ei selaimen lomake.
+            Db.Users.Add(new User { FirstName = form.FirstName.Trim(), LastName = form.LastName.Trim(),
+                Email = form.Email.Trim(), CreatedAt = DateTime.Now });
+            if (await TrySave()) return RedirectToAction(nameof(Index));
         }
-        return View(user);
+        return View(form);
     }
 
-    // GET: USERS/Edit/5
-    public async Task<IActionResult> Edit(int? id)
+    public async Task<IActionResult> Edit(int id)
     {
-        if (id == null)
-        {
-            return NotFound();
-        }
-
-        var user = await _context.Users.FindAsync(id);
-        if (user == null)
-        {
-            return NotFound();
-        }
-        return View(user);
+        var user = await Db.Users.FindAsync(id);
+        return user is null ? NotFound() : View(new UserForm
+            { FirstName = user.FirstName, LastName = user.LastName, Email = user.Email });
     }
 
-    // POST: USERS/Edit/5
-    // To protect from overposting attacks, enable the specific properties you want to bind to.
-    // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int? id, [Bind("UserId,FirstName,LastName,Email,CreatedAt,Projects,Tasks")] User user)
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> Edit(int id, UserForm form)
     {
-        if (id != user.UserId)
-        {
-            return NotFound();
-        }
-
+        var user = await Db.Users.FindAsync(id);
+        if (user is null) return NotFound();
+        await ValidateEmail(form, id);
         if (ModelState.IsValid)
         {
-            try
-            {
-                _context.Update(user);
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!UserExists(user.UserId))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-            return RedirectToAction(nameof(Index));
+            // Muutetaan haettua oliota: CreatedAt ja relaatiot säilyvät ennallaan.
+            user.FirstName = form.FirstName.Trim();
+            user.LastName = form.LastName.Trim();
+            user.Email = form.Email.Trim();
+            if (await TrySave()) return RedirectToAction(nameof(Index));
         }
-        return View(user);
+        return View(form);
     }
 
-    // GET: USERS/Delete/5
-    public async Task<IActionResult> Delete(int? id)
+    public async Task<IActionResult> Delete(int id)
     {
-        if (id == null)
-        {
-            return NotFound();
-        }
-
-        var user = await _context.Users
-            .FirstOrDefaultAsync(m => m.UserId == id);
-        if (user == null)
-        {
-            return NotFound();
-        }
-
-        return View(user);
+        var user = await ReadUser(id);
+        return user is null ? NotFound() : View(user);
     }
 
-    // POST: USERS/Delete/5
-    [HttpPost, ActionName("Delete")]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> DeleteConfirmed(int? id)
+    [HttpPost, ActionName("Delete"), ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        var user = await _context.Users.FindAsync(id);
-        if (user != null)
+        var user = await Db.Users.Include(u => u.Projects).Include(u => u.Tasks).AsSplitQuery().FirstOrDefaultAsync(u => u.UserId == id);
+        if (user is null) return NotFound();
+        // Pakollista vierasavainta ei voi tyhjentää. Siirrä liittyvät tiedot ensin toiselle henkilölle.
+        if (user.Projects.Count > 0 || user.Tasks.Count > 0)
+            ModelState.AddModelError("", "Siirrä käyttäjän projektit ja tehtävät toiselle käyttäjälle tai poista ne ensin.");
+        else
         {
-            _context.Users.Remove(user);
+            Db.Users.Remove(user);
+            if (await TrySave()) return RedirectToAction(nameof(Index));
         }
-
-        await _context.SaveChangesAsync();
-        return RedirectToAction(nameof(Index));
+        return View("Delete", user);
     }
 
-    private bool UserExists(int? id)
+    // Kaksi kokoelmaa luetaan erillisillä kyselyillä, jotta projektien ja tehtävien rivit eivät monistu keskenään.
+    private Task<User?> ReadUser(int id) => Db.Users.AsNoTracking().AsSplitQuery()
+        .Include(u => u.Projects).Include(u => u.Tasks).FirstOrDefaultAsync(u => u.UserId == id);
+
+    private async System.Threading.Tasks.Task ValidateEmail(UserForm form, int? id = null)
     {
-        return _context.Users.Any(e => e.UserId == id);
+        if (!string.IsNullOrWhiteSpace(form.Email) &&
+            await Db.Users.AnyAsync(u => u.Email == form.Email.Trim() && u.UserId != id))
+            ModelState.AddModelError(nameof(form.Email), "Sähköpostiosoite on jo käytössä.");
     }
 }

@@ -1,0 +1,45 @@
+@model TaskForm
+
+@* Osanäkymä jakaa samat kentät Create- ja Edit-lomakkeille. *@
+@if (Model.Users.Count == 0)
+{
+    <div class="alert alert-info">Lisää ensin käyttäjä, jotta voit valita vastuuhenkilön.
+        <a asp-controller="Users" asp-action="Create">Lisää käyttäjä</a>
+    </div>
+}
+<div class="mb-3">
+    <label asp-for="Title" class="form-label"></label>
+    <input asp-for="Title" class="form-control" />
+    <span asp-validation-for="Title" class="text-danger"></span>
+</div>
+<div class="mb-3">
+    <label asp-for="Description" class="form-label"></label>
+    <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+    <span asp-validation-for="Description" class="text-danger"></span>
+</div>
+<div class="mb-3">
+    <label asp-for="Status" class="form-label"></label>
+    <select asp-for="Status" asp-items="Html.GetEnumSelectList<WorkStatus>()" class="form-select">
+    </select>
+    <span asp-validation-for="Status" class="text-danger"></span>
+</div>
+<div class="mb-3">
+    <label asp-for="Priority" class="form-label"></label>
+    <select asp-for="Priority" asp-items="Html.GetEnumSelectList<TaskPriority>()" class="form-select">
+    </select>
+    <span asp-validation-for="Priority" class="text-danger"></span>
+</div>
+<div class="mb-3">
+    <label asp-for="UserId" class="form-label"></label>
+    <select asp-for="UserId" asp-items="Model.Users" class="form-select">
+        <option value="">Valitse käyttäjä</option>
+    </select>
+    <span asp-validation-for="UserId" class="text-danger"></span>
+</div>
+<div class="mb-3">
+    <label asp-for="ProjectId" class="form-label"></label>
+    <select asp-for="ProjectId" asp-items="Model.Projects" class="form-select">
+        <option value="">Ei projektia</option>
+    </select>
+    <span asp-validation-for="ProjectId" class="text-danger"></span>
+</div>

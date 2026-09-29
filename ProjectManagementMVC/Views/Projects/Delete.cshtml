@@ -1,9 +1,13 @@
-@model ProjectManagementMVC.Models.Task
-@{ ViewData["Title"] = "Poista tehtävä"; }
+@model Project
+@{ ViewData["Title"] = "Poista projekti"; }
 <h1>@ViewData["Title"]</h1>
 <p>Haluatko varmasti poistaa tämän tietueen?</p>
+@if (Model.Tasks.Count > 0)
+{
+    <div class="alert alert-warning">Projektilla on tehtäviä. Siirrä ne, valitse niille Ei projektia tai poista ne ensin.</div>
+}
 <partial name="_Details" model="Model" />
-<form asp-action="Delete" asp-route-id="@Model.TaskId" method="post">
+<form asp-action="Delete" asp-route-id="@Model.ProjectId" method="post">
     <div asp-validation-summary="All" class="text-danger" role="alert"></div>
     <button type="submit" class="btn btn-danger">Vahvista poisto</button>
     <a asp-action="Index" class="btn btn-outline-secondary">Peruuta</a>

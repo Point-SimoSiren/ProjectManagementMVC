@@ -1,59 +1,6 @@
-@model ProjectManagementMVC.Models.User
-
-@{
-    ViewData["Title"] = "Details";
-}
-
-<h1>Details</h1>
-
-<div>
-    <h4>User</h4>
-    <hr />
-    <dl class="row">
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.FirstName)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.FirstName)
-        </dd>
-    </dl>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.LastName)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.LastName)
-        </dd>
-    </dl>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Email)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Email)
-        </dd>
-    </dl>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.CreatedAt)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.CreatedAt)
-        </dd>
-    </dl>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Projects)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Projects)
-        </dd>
-    </dl>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Tasks)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Tasks)
-        </dd>
-    </dl>
-</div>
-<div>
-    <a asp-action="Edit" asp-route-id="@Model?.UserId">Edit</a> |
-    <a asp-action="Index">Back to List</a>
-</div>
+@model User
+@{ ViewData["Title"] = "Tiedot: käyttäjä"; }
+<h1>@ViewData["Title"]</h1>
+<partial name="_Details" model="Model" />
+<a asp-action="Edit" asp-route-id="@Model.UserId" class="btn btn-primary">Muokkaa</a>
+<a asp-action="Index" class="btn btn-outline-secondary">Takaisin listaan</a>

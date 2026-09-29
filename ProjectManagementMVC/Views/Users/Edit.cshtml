@@ -1,59 +1,15 @@
-@model ProjectManagementMVC.Models.User
-
-@{
-    ViewData["Title"] = "Edit";
-}
-
-<h1>Edit</h1>
-
-<h4>User</h4>
-<hr />
-<div class="row">
-    <div class="col-md-4">
-        <form asp-action="Edit">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <input type="hidden" asp-for="UserId" />
-            <div class="form-group">
-                <label asp-for="FirstName" class="control-label"></label>
-                <input asp-for="FirstName" class="form-control" />
-                <span asp-validation-for="FirstName" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="LastName" class="control-label"></label>
-                <input asp-for="LastName" class="form-control" />
-                <span asp-validation-for="LastName" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Email" class="control-label"></label>
-                <input asp-for="Email" class="form-control" />
-                <span asp-validation-for="Email" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="CreatedAt" class="control-label"></label>
-                <input asp-for="CreatedAt" class="form-control" />
-                <span asp-validation-for="CreatedAt" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Projects" class="control-label"></label>
-                <input asp-for="Projects" class="form-control" />
-                <span asp-validation-for="Projects" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Tasks" class="control-label"></label>
-                <input asp-for="Tasks" class="form-control" />
-                <span asp-validation-for="Tasks" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <input type="submit" value="Save" class="btn btn-primary" />
-            </div>
-        </form>
-    </div>
-</div>
-
-<div>
-    <a asp-action="Index">Back to List</a>
-</div>
-
+@model UserForm
+@{ ViewData["Title"] = "Muokkaa käyttäjä"; }
+<h1>@ViewData["Title"]</h1>
+<div class="row"><div class="col-md-7 col-lg-6">
+    @* Form Tag Helper tuottaa myös CSRF-suojauksen vaatiman piilokentän. *@
+    <form asp-action="Edit" asp-route-id="@Context.Request.RouteValues["id"]" method="post">
+        <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
+        <partial name="_Fields" model="Model" />
+        <button type="submit" class="btn btn-primary">Tallenna</button>
+        <a asp-action="Index" class="btn btn-outline-secondary">Peruuta</a>
+    </form>
+</div></div>
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <partial name="_ValidationScriptsPartial" />
 }

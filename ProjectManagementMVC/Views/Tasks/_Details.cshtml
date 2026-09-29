@@ -1,0 +1,17 @@
+@model ProjectManagementMVC.Models.Task
+<dl class="row">
+    <dt class="col-sm-3">Otsikko</dt><dd class="col-sm-9">@Model.Title</dd>
+    <dt class="col-sm-3">Kuvaus</dt><dd class="col-sm-9">@Model.Description</dd>
+    <dt class="col-sm-3">Tila</dt><dd class="col-sm-9">@Html.DisplayFor(m => m.Status)</dd>
+    <dt class="col-sm-3">Prioriteetti</dt><dd class="col-sm-9">@Html.DisplayFor(m => m.Priority)</dd>
+    <dt class="col-sm-3">Vastuuhenkilö</dt><dd class="col-sm-9"><a asp-controller="Users" asp-action="Details" asp-route-id="@Model.UserId">@Model.User.FirstName @Model.User.LastName</a></dd>
+    <dt class="col-sm-3">Projekti</dt><dd class="col-sm-9">
+        @if (Model.Project is not null)
+        {
+            <a asp-controller="Projects" asp-action="Details" asp-route-id="@Model.ProjectId">@Model.Project.Name</a>
+        }
+        else { <span>Ei projektia</span> }
+    </dd>
+    <dt class="col-sm-3">Luotu</dt><dd class="col-sm-9">@Model.CreatedAt.ToString("dd.MM.yyyy HH:mm")</dd>
+    <dt class="col-sm-3">Tila muuttunut</dt><dd class="col-sm-9">@(Model.StatusChanged?.ToString("dd.MM.yyyy HH:mm") ?? "Ei tietoa")</dd>
+</dl>

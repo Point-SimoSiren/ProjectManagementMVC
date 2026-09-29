@@ -1,149 +1,93 @@
-
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ProjectManagementMVC.Models;
+using ProjectManagementMVC.ViewModels;
 
-public class ProjectsController : Controller
+namespace ProjectManagementMVC.Controllers;
+
+public class ProjectsController(TaskDbContext context, ILogger<ProjectsController> logger) : CrudController(context, logger)
 {
-    private readonly TaskDbContext _context;
-
-    public ProjectsController(TaskDbContext context)
+    public async Task<IActionResult> Index(string? search, int? userId)
     {
-        _context = context;
+        // Include lataa omistajan näkymään: näytetään nimi pelkän avaimen sijaan.
+        var query = Db.Projects.AsNoTracking().Include(p => p.User).AsQueryable();
+        search = search?.Trim();
+        if (!string.IsNullOrEmpty(search))
+            query = query.Where(p => p.Name.Contains(search) || (p.Description != null && p.Description.Contains(search))
+                || (p.User.FirstName + " " + p.User.LastName).Contains(search) || p.User.Email.Contains(search));
+        if (userId.HasValue) query = query.Where(p => p.UserId == userId);
+        return View(new ListViewModel<Project> { Search = search, UserId = userId,
+            Items = await query.OrderBy(p => p.Name).ToListAsync(), Users = await UserOptions() });
     }
 
-    // GET: PROJECTS
-    public async Task<IActionResult> Index()    
+    public async Task<IActionResult> Details(int id)
     {
-        return View(await _context.Projects.ToListAsync());
+        var project = await ReadProject(id);
+        return project is null ? NotFound() : View(project);
     }
 
-    // GET: PROJECTS/Details/5
-    public async Task<IActionResult> Details(int? projectid)
+    public async Task<IActionResult> Create() => View(new ProjectForm { Users = await UserOptions() });
+
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> Create(ProjectForm form)
     {
-        if (projectid == null)
-        {
-            return NotFound();
-        }
-
-        var project = await _context.Projects
-            .FirstOrDefaultAsync(m => m.ProjectId == projectid);
-        if (project == null)
-        {
-            return NotFound();
-        }
-
-        return View(project);
-    }
-
-    // GET: PROJECTS/Create
-    public IActionResult Create()
-    {
-        return View();
-    }
-
-    // POST: PROJECTS/Create
-    // To protect from overposting attacks, enable the specific properties you want to bind to.
-    // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create([Bind("ProjectId,Name,Description,UserId,CreatedAt,Tasks,User")] Project project)
-    {
+        await ValidateUser(form.UserId);
         if (ModelState.IsValid)
         {
-            _context.Add(project);
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+            Db.Projects.Add(new Project { Name = form.Name.Trim(), Description = form.Description?.Trim(),
+                UserId = form.UserId!.Value, CreatedAt = DateTime.Now });
+            if (await TrySave()) return RedirectToAction(nameof(Index));
         }
-        return View(project);
+        form.Users = await UserOptions();
+        return View(form);
     }
 
-    // GET: PROJECTS/Edit/5
-    public async Task<IActionResult> Edit(int? projectid)
+    public async Task<IActionResult> Edit(int id)
     {
-        if (projectid == null)
-        {
-            return NotFound();
-        }
-
-        var project = await _context.Projects.FindAsync(projectid);
-        if (project == null)
-        {
-            return NotFound();
-        }
-        return View(project);
+        var project = await Db.Projects.FindAsync(id);
+        return project is null ? NotFound() : View(new ProjectForm { Name = project.Name,
+            Description = project.Description, UserId = project.UserId, Users = await UserOptions() });
     }
 
-    // POST: PROJECTS/Edit/5
-    // To protect from overposting attacks, enable the specific properties you want to bind to.
-    // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int? projectid, [Bind("ProjectId,Name,Description,UserId,CreatedAt,Tasks,User")] Project project)
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> Edit(int id, ProjectForm form)
     {
-        if (projectid != project.ProjectId)
-        {
-            return NotFound();
-        }
-
+        var project = await Db.Projects.FindAsync(id);
+        if (project is null) return NotFound();
+        await ValidateUser(form.UserId);
         if (ModelState.IsValid)
         {
-            try
-            {
-                _context.Update(project);
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!ProjectExists(project.ProjectId))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-            return RedirectToAction(nameof(Index));
+            project.Name = form.Name.Trim();
+            project.Description = form.Description?.Trim();
+            project.UserId = form.UserId!.Value;
+            if (await TrySave()) return RedirectToAction(nameof(Index));
         }
-        return View(project);
+        form.Users = await UserOptions();
+        return View(form);
     }
 
-    // GET: PROJECTS/Delete/5
-    public async Task<IActionResult> Delete(int? projectid)
+    public async Task<IActionResult> Delete(int id)
     {
-        if (projectid == null)
-        {
-            return NotFound();
-        }
-
-        var project = await _context.Projects
-            .FirstOrDefaultAsync(m => m.ProjectId == projectid);
-        if (project == null)
-        {
-            return NotFound();
-        }
-
-        return View(project);
+        var project = await ReadProject(id);
+        return project is null ? NotFound() : View(project);
     }
 
-    // POST: PROJECTS/Delete/5
-    [HttpPost, ActionName("Delete")]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> DeleteConfirmed(int? projectid)
+    [HttpPost, ActionName("Delete"), ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        var project = await _context.Projects.FindAsync(projectid);
-        if (project != null)
+        var project = await Db.Projects.Include(p => p.User).Include(p => p.Tasks).FirstOrDefaultAsync(p => p.ProjectId == id);
+        if (project is null) return NotFound();
+        // Poisto ei hävitä tehtäviä huomaamatta. Tehtävästä voi myös poistaa projektivalinnan.
+        if (project.Tasks.Count > 0)
+            ModelState.AddModelError("", "Siirrä projektin tehtävät, valitse niille Ei projektia tai poista ne ensin.");
+        else
         {
-            _context.Projects.Remove(project);
+            Db.Projects.Remove(project);
+            if (await TrySave()) return RedirectToAction(nameof(Index));
         }
-
-        await _context.SaveChangesAsync();
-        return RedirectToAction(nameof(Index));
+        return View("Delete", project);
     }
 
-    private bool ProjectExists(int? projectid)
-    {
-        return _context.Projects.Any(e => e.ProjectId == projectid);
-    }
+    private Task<Project?> ReadProject(int id) => Db.Projects.AsNoTracking()
+        .Include(p => p.User).Include(p => p.Tasks).FirstOrDefaultAsync(p => p.ProjectId == id);
 }
